@@ -1,0 +1,16 @@
+[
+{
+  "modid": "rngdifficulty",
+  "name": "RNG Difficulty",
+  "description": "Random Difficulty Mod.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Tfarecmin"],
+  "credits": "Fundy, for implementation",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
