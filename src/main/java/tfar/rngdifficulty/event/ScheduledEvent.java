@@ -1,6 +1,6 @@
 package tfar.rngdifficulty.event;
 
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 
 public class ScheduledEvent implements Runnable {
 
@@ -9,17 +9,17 @@ public class ScheduledEvent implements Runnable {
     public final long startTick;
     public final long delay;
     public final long endTick;
-    public final EntityPlayerMP player;
+    public final ServerPlayerEntity player;
 
-    public ScheduledEvent(long delay, EntityPlayerMP player) {
-        this.startTick = player.world.getTotalWorldTime();
+    public ScheduledEvent(long delay, ServerPlayerEntity player) {
+        this.startTick = player.world.getGameTime();
         this.delay = delay;
         this.endTick = delay + startTick;
         this.player = player;
     }
 
     public boolean canRun() {
-        return !ran && player.world.getWorldInfo().getWorldTotalTime() >= endTick;
+        return !ran && player.world.getWorldInfo().getGameTime() >= endTick;
     }
 
     @Override

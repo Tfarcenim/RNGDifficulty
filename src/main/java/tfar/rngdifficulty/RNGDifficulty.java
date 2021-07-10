@@ -1,29 +1,26 @@
 package tfar.rngdifficulty;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemFood;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+
 import tfar.rngdifficulty.event.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Mod(modid = RNGDifficulty.MODID, name = RNGDifficulty.NAME, version = RNGDifficulty.VERSION)
+@Mod(RNGDifficulty.MODID)
 @Mod.EventBusSubscriber
 public class RNGDifficulty {
     public static final String MODID = "rngdifficulty";
-    public static final String NAME = "RNG Difficulty";
-    public static final String VERSION = "1.0";
 
     private static final List<ScheduledEvent> active_events = new ArrayList<>();
     private static final List<ScheduledEvent> events_to_add = new ArrayList<>();
@@ -42,38 +39,38 @@ public class RNGDifficulty {
     @SubscribeEvent
     public static void tick(TickEvent.WorldTickEvent e) {
         if (!e.world.isRemote && e.phase == TickEvent.Phase.START) {
-            tickEvents(e.world.getMinecraftServer());
+            tickEvents(e.world.getServer());
         }
     }
 
     @SubscribeEvent
     public static void breakBlock(BlockEvent.BreakEvent e) {
         if (!e.getPlayer().world.isRemote) {
-            IBlockState state = e.getState();
+            BlockState state = e.getState();
             if (state.getBlock().getRegistryName().toString().contains("log") || (state.getBlock() == Blocks.STONE && e.getPlayer().getRNG().nextDouble() < ScheduledBreakBlockEvent.stoneRollChance)) {
-                int i = cycleNumbersAndPick((EntityPlayerMP) e.getPlayer());
-                addEventToServer(new ScheduledBreakBlockEvent(2 * itr + 4, (EntityPlayerMP) e.getPlayer(), i, e.getState(),e.getPos()));
+                int i = cycleNumbersAndPick((ServerPlayerEntity) e.getPlayer());
+                addEventToServer(new ScheduledBreakBlockEvent(2 * itr + 4, (ServerPlayerEntity) e.getPlayer(), i, e.getState(),e.getPos()));
             }
         }
     }
 
     @SubscribeEvent
     public static void craftItem(PlayerEvent.ItemCraftedEvent e) {
-        if (!e.player.world.isRemote && e.crafting.isItemStackDamageable()) {
-            int i = cycleNumbersAndPick((EntityPlayerMP) e.player);
-            ItemStack crafted = e.crafting.copy();
-            e.craftMatrix.clear();
-            e.crafting.setCount(0);
-            e.player.closeScreen();
-            addEventToServer(new ScheduledCraftItemEvent(2 * itr + 4, (EntityPlayerMP) e.player,i,crafted));
+        if (!e.getPlayer().world.isRemote && e.getCrafting().isDamageable()) {
+            int i = cycleNumbersAndPick((ServerPlayerEntity) e.getPlayer());
+            ItemStack crafted = e.getCrafting().copy();
+            e.getInventory().clear();
+            e.getCrafting().setCount(0);
+            e.getPlayer().closeScreen();
+            addEventToServer(new ScheduledCraftItemEvent(2 * itr + 4, (ServerPlayerEntity) e.getPlayer(),i,crafted));
         }
     }
 
     @SubscribeEvent
     public static void onEaten(LivingEntityUseItemEvent.Finish e) {
-        if (e.getItem().getItem() instanceof ItemFood && e.getEntityLiving() instanceof EntityPlayerMP) {
-            int i = cycleNumbersAndPick((EntityPlayerMP) e.getEntityLiving());
-            addEventToServer(new ScheduledEatEvent(2 * itr + 4, (EntityPlayerMP) e.getEntityLiving(),i));
+        if (e.getItem().getItem().isFood() && e.getEntityLiving() instanceof ServerPlayerEntity) {
+            int i = cycleNumbersAndPick((ServerPlayerEntity) e.getEntityLiving());
+            addEventToServer(new ScheduledEatEvent(2 * itr + 4, (ServerPlayerEntity) e.getEntityLiving(),i));
         }
     }
 
@@ -94,7 +91,7 @@ public class RNGDifficulty {
 
     public static int itr = 25;
 
-    public static int cycleNumbersAndPick(EntityPlayerMP player) {
+    public static int cycleNumbersAndPick(ServerPlayerEntity player) {
         setIsRolling();
         for (int i = 1 ; i < itr;i++) {
             CycleNumberEvent event = new CycleNumberEvent(i * 2,player);
